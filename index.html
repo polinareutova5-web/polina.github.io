@@ -97,17 +97,24 @@
     document.getElementById("guessInput").value = "";
     document.getElementById("guessInput").disabled = false;
     document.getElementById("submitBtn").disabled = false;
-    document.getElementById("status").className = "info";
+    document.getElementById("status").className = "message info";
     document.getElementById("status").textContent = 
       `Я загадал слово из ${secretWord.length} букв. У вас ${maxAttempts} попыток!`;
-    document.querySelector("#game button#restart")?.remove();
+    
+    // Удаляем все сообщения и подсказки кроме статуса
+    const messages = document.querySelectorAll('.message:not(#status), .hint, #restart');
+    messages.forEach(msg => {
+      if (msg.parentNode) {
+        msg.parentNode.removeChild(msg);
+      }
+    });
   }
 
   function showMessage(text, type = "info") {
     const el = document.createElement("div");
     el.className = `message ${type}`;
     el.textContent = text;
-    document.getElementById("game").insertBefore(el, document.getElementById("guessInput").parentNode);
+    document.getElementById("game").insertBefore(el, document.getElementById("guessInput"));
   }
 
   function showHint(guess) {
@@ -135,10 +142,10 @@
     }
 
     hint.innerHTML = html;
-    document.getElementById("game").insertBefore(hint, document.getElementById("guessInput").parentNode);
+    document.getElementById("game").insertBefore(hint, document.getElementById("guessInput"));
   }
 
-  document.getElementById("submitBtn").addEventListener("click", () => {
+  function checkGuess() {
     const input = document.getElementById("guessInput");
     let guess = input.value.trim().toLowerCase();
 
@@ -186,6 +193,16 @@
     document.getElementById("attemptNum").textContent = attempts + 1;
     input.value = "";
     input.focus();
+  }
+
+  // Назначаем обработчик событий
+  document.getElementById("submitBtn").addEventListener("click", checkGuess);
+  
+  // Также добавляем обработчик для клавиши Enter
+  document.getElementById("guessInput").addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+      checkGuess();
+    }
   });
 
   // Запуск игры
