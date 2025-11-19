@@ -71,4 +71,126 @@
 </head>
 <body>
 
-<div class="header">УГ
+<div class="header">УГАДАЙ СЛОВО (на английском)</div>
+<div id="game">
+  <div id="status" class="info">Я загадал слово из <span id="wordLen">?</span> букв. У вас 6 попыток!</div>
+  <div class="attempts">Попытка <span id="attemptNum">1</span>/6</div>
+  <input type="text" id="guessInput" placeholder="Введите слово на английском" maxlength="15" />
+  <button id="submitBtn">Проверить</button>
+</div>
+
+<script>
+  const words = [
+    "apple", "banana", "cherry", "dragonfruit", "elephant",
+    "guitar", "hospital", "internet", "jungle", "kangaroo"
+  ];
+
+  let secretWord = "";
+  let attempts = 0;
+  const maxAttempts = 6;
+
+  function initGame() {
+    secretWord = words[Math.floor(Math.random() * words.length)];
+    attempts = 0;
+    document.getElementById("wordLen").textContent = secretWord.length;
+    document.getElementById("attemptNum").textContent = attempts + 1;
+    document.getElementById("guessInput").value = "";
+    document.getElementById("guessInput").disabled = false;
+    document.getElementById("submitBtn").disabled = false;
+    document.getElementById("status").className = "info";
+    document.getElementById("status").textContent = 
+      `Я загадал слово из ${secretWord.length} букв. У вас ${maxAttempts} попыток!`;
+    document.querySelector("#game button#restart")?.remove();
+  }
+
+  function showMessage(text, type = "info") {
+    const el = document.createElement("div");
+    el.className = `message ${type}`;
+    el.textContent = text;
+    document.getElementById("game").insertBefore(el, document.getElementById("guessInput").parentNode);
+  }
+
+  function showHint(guess) {
+    const hint = document.createElement("div");
+    hint.className = "hint";
+
+    // Длина
+    let html = `Ваше слово: ${guess.length} букв; загаданное: ${secretWord.length} букв<br>`;
+
+    // Совпадения по позициям
+    let correctPositions = 0;
+    for (let i = 0; i < Math.min(guess.length, secretWord.length); i++) {
+      if (guess[i] === secretWord[i]) correctPositions++;
+    }
+    html += `Совпадает ${correctPositions} букв на правильных позициях<br>`;
+
+    // Общие буквы
+    const guessSet = new Set(guess);
+    const secretSet = new Set(secretWord);
+    const common = [...guessSet].filter(letter => secretSet.has(letter));
+    if (common.length > 0) {
+      html += `Общие буквы: ${common.sort().join(", ")} (всего ${common.length})`;
+    } else {
+      html += "Общих букв нет";
+    }
+
+    hint.innerHTML = html;
+    document.getElementById("game").insertBefore(hint, document.getElementById("guessInput").parentNode);
+  }
+
+  document.getElementById("submitBtn").addEventListener("click", () => {
+    const input = document.getElementById("guessInput");
+    let guess = input.value.trim().toLowerCase();
+
+    // Валидация
+    if (!/^[a-z]+$/.test(guess)) {
+      showMessage("❌ Введите только буквы (без цифр и символов)!", "error");
+      return;
+    }
+    if (guess === "") {
+      showMessage("❌ Поле не может быть пустым!", "error");
+      return;
+    }
+
+    attempts++;
+
+    if (guess === secretWord) {
+      showMessage(`🎉 ПОЗДРАВЛЯЕМ! Вы угадали: «${secretWord}»!`, "success");
+      showMessage(`Вы потратили ${attempts} попытку(и).`, "success");
+      input.disabled = true;
+      document.getElementById("submitBtn").disabled = true;
+      const restartBtn = document.createElement("button");
+      restartBtn.id = "restart";
+      restartBtn.textContent = "Сыграть ещё";
+      restartBtn.onclick = initGame;
+      document.getElementById("game").appendChild(restartBtn);
+      return;
+    }
+
+    // Показать подсказки
+    showHint(guess);
+
+    if (attempts >= maxAttempts) {
+      showMessage(`💥 Увы! Вы не угадали. Загаданное слово: «${secretWord}».` , "error");
+      input.disabled = true;
+      document.getElementById("submitBtn").disabled = true;
+      const restartBtn = document.createElement("button");
+      restartBtn.id = "restart";
+      restartBtn.textContent = "Сыграть ещё";
+      restartBtn.onclick = initGame;
+      document.getElementById("game").appendChild(restartBtn);
+      return;
+    }
+
+    // Обновить счётчик
+    document.getElementById("attemptNum").textContent = attempts + 1;
+    input.value = "";
+    input.focus();
+  });
+
+  // Запуск игры
+  initGame();
+</script>
+
+</body>
+</html>
